@@ -1,0 +1,87 @@
+chrome_ai_extension/
+│
+├── 📄 核心文件
+│   ├── manifest.json          # Chrome 扩展配置清单
+│   ├── popup.html             # 弹出窗口 HTML 结构
+│   ├── popup.css              # 弹出窗口样式表
+│   ├── popup.js               # 弹出窗口交互逻辑
+│   ├── content.js             # 内容脚本（网页内容提取）
+│   └── background.js          # 后台服务（API 调用）
+│
+├── 🎨 图标资源
+│   └── icons/
+│       ├── icon16.png         # 16x16 PNG 图标
+│       ├── icon16.svg         # 16x16 SVG 源文件
+│       ├── icon48.png         # 48x48 PNG 图标
+│       ├── icon48.svg         # 48x48 SVG 源文件
+│       ├── icon128.png        # 128x128 PNG 图标
+│       └── icon128.svg        # 128x128 SVG 源文件
+│
+├── 🔧 工具脚本
+│   ├── generate_icons.sh      # Bash 图标生成脚本
+│   └── generate_icons.py      # Python 图标生成脚本
+│
+├── 📚 文档文件
+│   ├── README.md              # 完整项目文档
+│   ├── INSTALL.md             # 详细安装指南
+│   ├── QUICKSTART.md          # 快速开始指南
+│   ├── PROJECT_SUMMARY.md     # 项目完成总结
+│   ├── STRUCTURE.txt          # 本文件（项目结构）
+│   └── config.example.json    # 配置示例文件
+│
+└── 📦 总计
+    ├── 6 个核心代码文件
+    ├── 6 个图标文件
+    ├── 2 个工具脚本
+    └── 6 个文档文件
+
+---
+
+文件说明：
+
+【核心功能文件】
+manifest.json       - 定义扩展权限、图标、脚本等配置
+popup.html         - 用户界面布局（设置、聊天窗口）
+popup.css          - 界面样式（渐变色、动画、布局）
+popup.js           - 前端逻辑（消息处理、API 调用、状态管理）
+content.js         - 提取网页内容（标题、URL、文本）
+background.js      - 后台服务（API 请求处理）
+
+【图标文件】
+*.png              - Chrome 扩展所需的 PNG 格式图标
+*.svg              - 可编辑的矢量图标源文件
+
+【工具脚本】
+generate_icons.sh  - 使用 librsvg/ImageMagick 转换 SVG 到 PNG
+generate_icons.py  - 使用 Python Pillow 生成简单图标
+
+【文档文件】
+README.md          - 功能介绍、使用方法、配置说明
+INSTALL.md         - 详细的安装步骤和配置教程
+QUICKSTART.md      - 1 分钟快速开始指南
+PROJECT_SUMMARY.md - 项目完成情况总结
+config.example.json- API 配置示例
+
+---
+
+主要技术栈：
+- HTML5 + CSS3 + JavaScript (ES6+)
+- Chrome Extension API (Manifest V3)
+- 
+---
+
+外部依赖：
+- OpenAI 兼容 API（OpenAI、Azure OpenAI、本地部署等）
+- Chrome Extensions API (Manifest V3)
+- Python (Pillow) for icon generation
+
+---
+
+使用流程：
+1. 用户点击扩展图标
+2. Content Script 读取当前网页内容
+3. 用户输入问题
+4. Popup 构建完整消息（系统提示 + 网页内容 + 问题）
+5. Background Service 调用 AI API
+6. 返回并显示 AI 回复
+7. 保持对话上下文

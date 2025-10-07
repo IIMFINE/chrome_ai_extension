@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenAI 网页助手</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>🤖 AI 助手</h1>
+    </header>
+
+    <!-- 设置区域 -->
+    <div class="settings-section">
+      <div class="setting-item">
+        <label for="apiKey">API Key:</label>
+        <div class="input-group">
+          <input type="password" id="apiKey" placeholder="输入 OpenAI API Key">
+          <button id="saveApiKey" class="btn-small">保存</button>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <label for="apiEndpoint">API Endpoint:</label>
+        <div class="input-group">
+          <input type="text" id="apiEndpoint" placeholder="https://api.openai.com/v1/chat/completions">
+          <button id="saveEndpoint" class="btn-small">保存</button>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <label for="modelSelect">选择模型:</label>
+        <div class="model-search-wrapper">
+          <input type="text" id="modelSearch" placeholder="搜索模型..." class="model-search-input">
+        </div>
+        <div class="input-group">
+          <select id="modelSelect" size="1">
+            <option value="gpt-4">GPT-4</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="gpt-4o-mini">GPT-4o Mini</option>
+            <option value="gpt-4-turbo-preview">GPT-4 Turbo</option>
+            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+            <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+            <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+            <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+            <option value="gemini-pro">Gemini Pro</option>
+            <option value="llama-2-70b-chat">Llama 2 70B</option>
+            <option value="mixtral-8x7b-instruct">Mixtral 8x7B</option>
+          </select>
+          <button id="refreshModels" class="btn-small" title="刷新模型列表">🔄</button>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <label for="sendMethod">发送方式:</label>
+        <div class="input-group">
+          <select id="sendMethod">
+            <option value="enter">Enter 发送 (Shift+Enter 换行)</option>
+            <option value="ctrl-enter">Ctrl+Enter 发送 (Enter 换行)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 页面信息 -->
+    <div class="page-info">
+      <div class="info-header">
+        <span>📄 当前网页</span>
+        <button id="refreshPage" class="btn-icon" title="重新加载页面内容">🔄</button>
+      </div>
+      <div id="pageTitle" class="page-title">加载中...</div>
+      <div id="pageUrl" class="page-url"></div>
+    </div>
+
+    <!-- 聊天区域 -->
+    <div class="chat-container">
+      <div id="chatMessages" class="chat-messages">
+        <div class="system-message">
+          👋 你好！我已经读取了当前网页的内容。你可以向我提问关于这个页面的任何问题。
+        </div>
+      </div>
+
+      <div class="input-area">
+        <textarea id="userInput" placeholder="在这里输入你的问题..." rows="2"></textarea>
+        <button id="sendButton" class="btn-send">发送</button>
+      </div>
+    </div>
+
+    <!-- 状态栏 -->
+    <div id="statusBar" class="status-bar"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>

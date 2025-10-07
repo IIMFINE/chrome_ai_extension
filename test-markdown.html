@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown 渲染测试</title>
+  <link rel="stylesheet" href="sidepanel.css">
+  <script src="markdown-renderer.js"></script>
+  <style>
+    body {
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    }
+    .test-container {
+      margin-bottom: 40px;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+    .test-message {
+      background: #f0f0f0;
+      padding: 16px;
+      border-radius: 14px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Markdown 渲染测试</h1>
+  
+  <div class="test-container">
+    <h2>测试内容 1: 标题和列表</h2>
+    <div class="message assistant-message markdown-content test-message" id="test1"></div>
+  </div>
+
+  <div class="test-container">
+    <h2>测试内容 2: 代码块</h2>
+    <div class="message assistant-message markdown-content test-message" id="test2"></div>
+  </div>
+
+  <div class="test-container">
+    <h2>测试内容 3: 复杂内容（您的示例）</h2>
+    <div class="message assistant-message markdown-content test-message" id="test3"></div>
+  </div>
+
+  <script>
+    // 测试内容 1
+    const testMarkdown1 = `# 这是一级标题
+## 这是二级标题
+### 这是三级标题
+
+这是一段普通文本，包含**粗体**和*斜体*。
+
+- 列表项 1
+- 列表项 2
+- 列表项 3
+
+1. 有序列表 1
+2. 有序列表 2
+3. 有序列表 3`;
+
+    // 测试内容 2
+    const testMarkdown2 = `这里有一些代码：
+
+\`\`\`python
+def hello_world():
+    print("Hello, World!")
+    return True
+\`\`\`
+
+还有行内代码：\`const x = 10;\``;
+
+    // 测试内容 3 - 您的实际内容
+    const testMarkdown3 = `根据网页内容，"速度场"在SmolVLA模型中扮演着核心角色，特别是在Flow Matching机制中。
+
+1. **模型预测的"速度场" (\`v_t\`)：**
+   * 它由模型的前向传播结果 \`suffix_out\` 经过一个投影层 \`self.action_out_proj\`
+   * 生成的维度与动作空间维度相同
+   * 表示从当前状态 \`x_t\` 到目标动作 \`x_1\` 的瞬时变化方向
+
+2. **Flow Matching 的核心思想：**
+   * 将动作生成建模为一个从噪声到目标动作的连续流动过程
+   * 模型学习预测这个流的速度场
+
+\`\`\`python
+# 示例代码
+v_t = self.action_out_proj(suffix_out)
+flow = v_t * dt
+\`\`\``;
+
+    // 渲染测试内容
+    function renderTest() {
+      if (typeof simpleMarkdown !== 'undefined') {
+        console.log('✅ 使用备用 Markdown 渲染器');
+        document.getElementById('test1').innerHTML = simpleMarkdown.render(testMarkdown1);
+        document.getElementById('test2').innerHTML = simpleMarkdown.render(testMarkdown2);
+        document.getElementById('test3').innerHTML = simpleMarkdown.render(testMarkdown3);
+      } else {
+        console.error('❌ Markdown 渲染器未加载');
+        document.getElementById('test1').textContent = '渲染器未加载！';
+      }
+    }
+
+    // 页面加载后渲染
+    window.addEventListener('load', renderTest);
+  </script>
+</body>
+</html>
