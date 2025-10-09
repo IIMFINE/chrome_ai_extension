@@ -5,6 +5,7 @@ let apiKey = '';
 let selectedModel = 'gpt-4';
 let apiEndpoint = 'https://api.openai.com/v1/chat/completions';
 let sendMethod = 'enter'; // 'enter' or 'ctrl-enter'
+let systemPrompt = '使用 Markdown 格式，代码块的格式使用 plain txt，避免将整个回复用三个反引号包裹起来'; // 默认 system prompt
 let currentStreamingMessageId = null; // 当前正在流式接收的消息 ID
 let currentStreamingContent = ''; // 当前流式接收的内容
 
@@ -19,6 +20,8 @@ const modelInput = document.getElementById('modelInput');
 const modelList = document.getElementById('modelList');
 const refreshModelsBtn = document.getElementById('refreshModels');
 const sendMethodSelect = document.getElementById('sendMethod');
+const systemPromptInput = document.getElementById('systemPrompt');
+const saveSystemPromptBtn = document.getElementById('saveSystemPrompt');
 const pageTitleEl = document.getElementById('pageTitle');
 const pageUrlEl = document.getElementById('pageUrl');
 const refreshPageBtn = document.getElementById('refreshPage');
@@ -225,7 +228,7 @@ function setupMarked() {
 // 加载设置
 async function loadSettings() {
   return new Promise((resolve) => {
-    chrome.storage.sync.get(['apiKey', 'selectedModel', 'apiEndpoint', 'sendMethod'], (result) => {
+    chrome.storage.sync.get(['apiKey', 'selectedModel', 'apiEndpoint', 'sendMethod', 'systemPrompt'], (result) => {
       if (result.apiKey) {
         apiKey = result.apiKey;
         apiKeyInput.value = '••••••••';
@@ -251,6 +254,15 @@ async function loadSettings() {
         sendMethodSelect.value = sendMethod;
       } else {
         sendMethodSelect.value = sendMethod;
+      }
+      
+      // 检查 systemPrompt 是否存在于存储中（包括空字符串）
+      if (result.hasOwnProperty('systemPrompt')) {
+        systemPrompt = result.systemPrompt;
+        systemPromptInput.value = result.systemPrompt;
+      } else {
+        // 使用默认值
+        systemPromptInput.value = systemPrompt;
       }
       
       resolve();
@@ -281,6 +293,17 @@ saveEndpointBtn.addEventListener('click', () => {
       setTimeout(() => updateStatus(''), 2000);
     });
   }
+});
+
+// 保存 System Prompt
+saveSystemPromptBtn.addEventListener('click', () => {
+  const prompt = systemPromptInput.value.trim();
+  // 允许保存空值（用户可以清空 system prompt）
+  chrome.storage.sync.set({ systemPrompt: prompt }, () => {
+    systemPrompt = prompt;
+    updateStatus('✅ System Prompt 已保存');
+    setTimeout(() => updateStatus(''), 2000);
+  });
 });
 
 // 模型输入框 - 输入时筛选
@@ -632,7 +655,9 @@ URL: ${pageContent.url}
 网页主要内容:
 ${pageContent.mainText}
 
-请基于以上网页内容回答用户的问题。如果问题与网页内容无关，也可以进行一般性回答。回答要简洁、准确、有帮助。`
+请基于以上网页内容回答用户的问题。如果问题与网页内容无关，也可以进行一般性回答。回答要简洁、准确、有帮助。
+
+${systemPrompt ? '\n用户要求：' + systemPrompt : ''}`
   };
   
   const messages = [systemMessage, ...chatHistory, { role: 'user', content: userMessage }];
