@@ -52,5 +52,5 @@
     return true; // 保持消息通道开放
   });
 
-  console.log('OpenAI 网页助手 - Content Script 已加载');
+  console.log('AI网页助手 - Content Script 已加载');
 })();

@@ -15,7 +15,8 @@ const apiKeyInput = document.getElementById('apiKey');
 const saveApiKeyBtn = document.getElementById('saveApiKey');
 const apiEndpointInput = document.getElementById('apiEndpoint');
 const saveEndpointBtn = document.getElementById('saveEndpoint');
-const modelSelect = document.getElementById('modelSelect');
+const modelInput = document.getElementById('modelInput');
+const modelList = document.getElementById('modelList');
 const refreshModelsBtn = document.getElementById('refreshModels');
 const sendMethodSelect = document.getElementById('sendMethod');
 const pageTitleEl = document.getElementById('pageTitle');
@@ -28,10 +29,6 @@ const statusBar = document.getElementById('statusBar');
 
 // 存储所有模型列表用于筛选
 let allModels = [];
-
-// 键盘筛选状态
-let filterText = '';
-let filterTimeout = null;
 
 // 初始化
 document.addEventListener('DOMContentLoaded', async () => {
@@ -65,6 +62,19 @@ function handleStreamChunk(content) {
   if (!currentStreamingMessageId) {
     console.error('没有活动的流式消息');
     return;
+  }
+
+  console.log('收到流式数据块，当前消息ID:', currentStreamingMessageId);
+
+  // 如果是第一次收到数据，清空"等待回复。。。"提示
+  if (currentStreamingContent === '') {
+    const messageDiv = document.getElementById(currentStreamingMessageId);
+    if (messageDiv) {
+      console.log('清空等待提示，消息类型:', messageDiv.className);
+      messageDiv.textContent = '';
+    } else {
+      console.error('找不到消息元素来清空等待提示:', currentStreamingMessageId);
+    }
   }
 
   currentStreamingContent += content;
@@ -108,6 +118,9 @@ function handleStreamError(error) {
   currentStreamingMessageId = null;
   currentStreamingContent = '';
   
+  // 清除状态栏
+  updateStatus('');
+  
   // 启用输入
   setInputEnabled(true);
   userInput.focus();
@@ -116,7 +129,16 @@ function handleStreamError(error) {
 // 更新流式消息
 function updateStreamingMessage(messageId, content) {
   const messageDiv = document.getElementById(messageId);
-  if (!messageDiv) return;
+  if (!messageDiv) {
+    console.error('找不到消息元素:', messageId);
+    return;
+  }
+  
+  // 验证这是一个助手消息元素
+  if (!messageDiv.classList.contains('assistant-message')) {
+    console.error('警告：试图更新非助手消息:', messageId, messageDiv.className);
+    return;
+  }
   
   // 直接显示文本内容（在流式过程中）
   messageDiv.textContent = content;
@@ -128,7 +150,16 @@ function updateStreamingMessage(messageId, content) {
 // 最终化流式消息（应用 Markdown 渲染）
 function finalizeStreamingMessage(messageId, content) {
   const messageDiv = document.getElementById(messageId);
-  if (!messageDiv) return;
+  if (!messageDiv) {
+    console.error('找不到要最终化的消息元素:', messageId);
+    return;
+  }
+  
+  // 验证这是一个助手消息元素
+  if (!messageDiv.classList.contains('assistant-message')) {
+    console.error('警告：试图最终化非助手消息:', messageId, messageDiv.className);
+    return;
+  }
   
   // 应用 Markdown 渲染
   if (typeof marked !== 'undefined') {
@@ -205,7 +236,7 @@ async function loadSettings() {
       
       if (result.selectedModel) {
         selectedModel = result.selectedModel;
-        modelSelect.value = selectedModel;
+        modelInput.value = selectedModel;
       }
       
       if (result.apiEndpoint) {
@@ -252,25 +283,50 @@ saveEndpointBtn.addEventListener('click', () => {
   }
 });
 
-// 模型选择
-modelSelect.addEventListener('change', (e) => {
+// 模型输入框 - 输入时筛选
+modelInput.addEventListener('input', (e) => {
+  const inputValue = e.target.value.trim().toLowerCase();
+  updateModelList(inputValue);
+});
+
+// 模型输入框 - 按 Enter 选择列表中的第一个
+modelInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    // 选择列表中的第一个选项
+    if (modelList.options.length > 0 && !modelList.options[0].disabled) {
+      modelList.selectedIndex = 0;
+      const selectedValue = modelList.value;
+      if (selectedValue && allModels.includes(selectedValue)) {
+        selectedModel = selectedValue;
+        modelInput.value = selectedValue;
+        chrome.storage.sync.set({ selectedModel });
+        updateStatus(`✅ 已切换到 ${selectedModel}`);
+        setTimeout(() => updateStatus(''), 2000);
+      }
+    }
+  }
+});
+
+// 模型列表框 - 选择时更新输入框和保存
+modelList.addEventListener('change', (e) => {
   const value = e.target.value;
   
-  // 如果选中的是搜索提示选项，自动选择下一个可用选项
-  if (value === '__search__') {
-    if (modelSelect.options.length > 1) {
-      modelSelect.selectedIndex = 1;
-      selectedModel = modelSelect.value;
-      chrome.storage.sync.set({ selectedModel });
-      updateStatus(`✅ 已切换到 ${selectedModel}`);
-      setTimeout(() => updateStatus(''), 2000);
-    }
-    return;
-  }
-  
-  // 正常的模型选择
-  if (value && value !== '__search__') {
+  if (value && allModels.includes(value)) {
     selectedModel = value;
+    modelInput.value = value;
+    chrome.storage.sync.set({ selectedModel });
+    updateStatus(`✅ 已切换到 ${selectedModel}`);
+    setTimeout(() => updateStatus(''), 2000);
+  }
+});
+
+// 模型列表框 - 双击选择
+modelList.addEventListener('dblclick', (e) => {
+  const value = modelList.value;
+  if (value && allModels.includes(value)) {
+    selectedModel = value;
+    modelInput.value = value;
     chrome.storage.sync.set({ selectedModel });
     updateStatus(`✅ 已切换到 ${selectedModel}`);
     setTimeout(() => updateStatus(''), 2000);
@@ -326,24 +382,16 @@ async function loadModels() {
         // 存储所有模型用于筛选
         allModels = models.map(m => m.id);
         
-        // 清空现有选项
-        modelSelect.innerHTML = '';
-        
-        // 添加新选项
-        models.forEach(model => {
-          const option = document.createElement('option');
-          option.value = model.id;
-          option.textContent = model.id;
-          modelSelect.appendChild(option);
-        });
+        // 更新 datalist
+        updateModelList('');
         
         // 恢复之前选择的模型，如果存在的话
         if (selectedModel && allModels.includes(selectedModel)) {
-          modelSelect.value = selectedModel;
+          modelInput.value = selectedModel;
         } else {
           // 如果之前的模型不存在，选择第一个
           selectedModel = allModels[0];
-          modelSelect.value = selectedModel;
+          modelInput.value = selectedModel;
           chrome.storage.sync.set({ selectedModel });
         }
         
@@ -391,16 +439,55 @@ function loadDefaultModels() {
   // 存储到全局变量
   allModels = [...defaultModels];
   
-  modelSelect.innerHTML = '';
-  defaultModels.forEach(modelId => {
-    const option = document.createElement('option');
-    option.value = modelId;
-    option.textContent = modelId;
-    modelSelect.appendChild(option);
-  });
+  // 更新 datalist
+  updateModelList('');
   
   if (selectedModel && defaultModels.includes(selectedModel)) {
-    modelSelect.value = selectedModel;
+    modelInput.value = selectedModel;
+  }
+}
+
+// 更新模型列表（根据搜索文本筛选）
+function updateModelList(searchText) {
+  const searchLower = searchText.toLowerCase();
+  
+  // 清空现有选项
+  modelList.innerHTML = '';
+  
+  // 筛选模型
+  let filteredModels = allModels;
+  if (searchLower) {
+    // 优先显示前缀匹配的模型，然后是包含匹配的模型
+    const prefixMatches = allModels.filter(modelId => 
+      modelId.toLowerCase().startsWith(searchLower)
+    );
+    const containsMatches = allModels.filter(modelId => 
+      !modelId.toLowerCase().startsWith(searchLower) && 
+      modelId.toLowerCase().includes(searchLower)
+    );
+    filteredModels = [...prefixMatches, ...containsMatches];
+  }
+  
+  // 如果有筛选结果，添加筛选后的选项
+  if (filteredModels.length > 0) {
+    filteredModels.forEach((modelId, index) => {
+      const option = document.createElement('option');
+      option.value = modelId;
+      option.textContent = modelId;
+      // 如果是当前选中的模型，设置为选中状态
+      if (modelId === selectedModel) {
+        option.selected = true;
+      }
+      modelList.appendChild(option);
+    });
+  } else {
+    // 没有匹配结果，显示提示
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = '❌ 未找到匹配的模型';
+    option.disabled = true;
+    option.selected = true;
+    modelList.appendChild(option);
   }
 }
 
@@ -409,126 +496,7 @@ refreshModelsBtn.addEventListener('click', async () => {
   await loadModels();
 });
 
-// 模型选择框键盘筛选
-modelSelect.addEventListener('keydown', (e) => {
-  // 处理 Enter 键 - 确认选择并清除筛选
-  if (e.key === 'Enter') {
-    // 如果当前选中的是搜索提示，选择第一个真实的模型
-    if (modelSelect.value === '__search__' && modelSelect.options.length > 1) {
-      modelSelect.selectedIndex = 1;
-      selectedModel = modelSelect.value;
-      chrome.storage.sync.set({ selectedModel });
-    }
-    // 清除筛选
-    filterText = '';
-    filterModels('');
-    return;
-  }
-  
-  // 处理 Escape 键 - 清除筛选
-  if (e.key === 'Escape') {
-    filterText = '';
-    filterModels('');
-    return;
-  }
-  
-  // 忽略其他特殊键
-  if (e.key === 'Tab' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-    return;
-  }
-  
-  // 处理退格键
-  if (e.key === 'Backspace') {
-    e.preventDefault();
-    filterText = filterText.slice(0, -1);
-    filterModels(filterText);
-    return;
-  }
-  
-  // 只处理单个字符输入
-  if (e.key.length === 1) {
-    e.preventDefault();
-    filterText += e.key;
-    filterModels(filterText);
-    
-    // 清除之前的超时
-    if (filterTimeout) {
-      clearTimeout(filterTimeout);
-    }
-    
-    // 2秒后自动清除筛选文本
-    filterTimeout = setTimeout(() => {
-      filterText = '';
-      filterModels('');
-    }, 2000);
-  }
-});
-
-// 筛选模型列表
-function filterModels(searchText) {
-  const searchLower = searchText.toLowerCase().trim();
-  
-  // 清空当前选项
-  modelSelect.innerHTML = '';
-  
-  // 如果没有搜索文本，显示所有模型
-  if (!searchLower) {
-    allModels.forEach(modelId => {
-      const option = document.createElement('option');
-      option.value = modelId;
-      option.textContent = modelId;
-      modelSelect.appendChild(option);
-    });
-    
-    // 恢复之前选择的模型
-    if (selectedModel && allModels.includes(selectedModel)) {
-      modelSelect.value = selectedModel;
-    } else if (modelSelect.options.length > 0) {
-      modelSelect.selectedIndex = 0;
-    }
-
-    // 清除搜索态标记
-    delete modelSelect.dataset.searchText;
-  } else {
-    // 根据搜索文本筛选模型（前缀匹配）
-    const filteredModels = allModels.filter(modelId => 
-      modelId.toLowerCase().startsWith(searchLower)
-    );
-    
-    // 先添加搜索提示选项（显示当前输入的搜索文本）
-    const searchOption = document.createElement('option');
-    searchOption.value = '__search__';
-    searchOption.textContent = `${searchText}`;
-    searchOption.dataset.searchText = searchText;
-    searchOption.setAttribute('aria-label', `当前输入: ${searchText}`);
-    searchOption.style.color = '#999';
-    searchOption.style.fontStyle = 'italic';
-    modelSelect.appendChild(searchOption);
-    searchOption.selected = true;
-    modelSelect.value = '__search__';
-    modelSelect.dataset.searchText = searchText;
-    
-    if (filteredModels.length > 0) {
-      filteredModels.forEach(modelId => {
-        const option = document.createElement('option');
-        option.value = modelId;
-        option.textContent = modelId;
-        modelSelect.appendChild(option);
-      });
-      // 选中搜索提示选项（显示当前输入的搜索文字）
-      modelSelect.selectedIndex = 0;
-    } else {
-      // 没有匹配的模型
-      const option = document.createElement('option');
-      option.value = '';
-      option.textContent = '未找到匹配的模型';
-      option.disabled = true;
-      modelSelect.appendChild(option);
-      // 选中搜索提示
-      modelSelect.selectedIndex = 0;
-    }
-  }
-}
+// 发送方式选择
 
 
 // 加载页面内容
@@ -608,7 +576,9 @@ async function sendMessage() {
   }
   
   // 显示用户消息
-  addMessage('user', message);
+  const userMessageId = addMessage('user', message);
+  console.log('用户消息已添加，ID:', userMessageId);
+  
   userInput.value = '';
   
   // 禁用输入
@@ -617,9 +587,13 @@ async function sendMessage() {
   // 更新用户消息历史
   chatHistory.push({ role: 'user', content: message });
   
-  // 创建助手消息占位符
-  currentStreamingMessageId = addMessage('assistant', '');
+  // 创建助手消息占位符，显示等待提示
+  currentStreamingMessageId = addMessage('assistant', '等待回复...');
+  console.log('助手消息占位符已创建，ID:', currentStreamingMessageId);
   currentStreamingContent = '';
+  
+  // 在调用 API 之前设置状态
+  updateStatus('🤖 正在接收回复...');
   
   try {
     // 构建消息历史
@@ -627,8 +601,6 @@ async function sendMessage() {
     
     // 调用流式 API
     await callStreamAPI(messages);
-    
-    updateStatus('🤖 正在接收回复...');
   } catch (error) {
     if (currentStreamingMessageId) {
       removeMessage(currentStreamingMessageId);
@@ -639,6 +611,8 @@ async function sendMessage() {
     addMessage('error', '错误: ' + error.message);
     console.error('API 调用失败:', error);
     
+    // 清除状态
+    updateStatus('');
     setInputEnabled(true);
     userInput.focus();
   }
@@ -724,8 +698,11 @@ async function callAPI(messages) {
 // 添加消息到聊天
 function addMessage(type, content) {
   const messageDiv = document.createElement('div');
-  const messageId = 'msg-' + Date.now();
+  // 生成唯一 ID，包含类型和时间戳，并添加随机数避免冲突
+  const messageId = type + '-msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
   messageDiv.id = messageId;
+  
+  console.log('添加消息:', type, 'ID:', messageId);
   
   switch (type) {
     case 'user':

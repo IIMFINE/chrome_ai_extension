@@ -4,18 +4,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OpenAI 网页助手</title>
+  <title>AI网页助手</title>
   <link rel="stylesheet" href="popup.css">
+  <!-- Markdown 渲染支持 - 本地文件 -->
+  <link rel="stylesheet" href="lib/github.min.css">
+  <script src="lib/marked.min.js"></script>
+  <script src="lib/highlight.min.js"></script>
+  <script src="markdown-renderer.js"></script>
 </head>
 
 <body>
   <div class="container">
     <header>
-      <h1>🤖 AI 助手</h1>
+      <div class="header-content">
+        <h1>🤖 AI 助手</h1>
+        <button id="settingsToggle" class="btn-settings" title="设置">⚙️</button>
+        </div>
     </header>
 
     <!-- 设置区域 -->
-    <div class="settings-section">
+    <div class="settings-section hidden">
       <div class="setting-item">
         <label for="apiKey">API Key:</label>
         <div class="input-group">

@@ -9,12 +9,13 @@ let currentStreamingMessageId = null; // 当前正在流式接收的消息 ID
 let currentStreamingContent = ''; // 当前流式接收的内容
 
 // DOM 元素
+const settingsToggleBtn = document.getElementById('settingsToggle');
+const settingsSection = document.querySelector('.settings-section');
 const apiKeyInput = document.getElementById('apiKey');
 const saveApiKeyBtn = document.getElementById('saveApiKey');
 const apiEndpointInput = document.getElementById('apiEndpoint');
 const saveEndpointBtn = document.getElementById('saveEndpoint');
 const modelSelect = document.getElementById('modelSelect');
-const modelSearchInput = document.getElementById('modelSearch');
 const refreshModelsBtn = document.getElementById('refreshModels');
 const sendMethodSelect = document.getElementById('sendMethod');
 const pageTitleEl = document.getElementById('pageTitle');
@@ -34,6 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadPageContent();
   await loadModels();
   setupEventListeners();
+  setupMarked();
   setupStreamListener();
 });
 
@@ -112,23 +114,77 @@ function updateStreamingMessage(messageId, content) {
   const messageDiv = document.getElementById(messageId);
   if (!messageDiv) return;
   
-  // 直接显示文本内容
+  // 直接显示文本内容（在流式过程中）
   messageDiv.textContent = content;
   
   // 滚动到底部
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// 最终化流式消息
+// 最终化流式消息（应用 Markdown 渲染）
 function finalizeStreamingMessage(messageId, content) {
   const messageDiv = document.getElementById(messageId);
   if (!messageDiv) return;
   
-  // popup.js 保持纯文本显示
-  messageDiv.textContent = content;
+  // 应用 Markdown 渲染
+  if (typeof marked !== 'undefined') {
+    try {
+      const html = marked.parse(content);
+      messageDiv.innerHTML = html;
+      
+      // 应用代码高亮
+      if (typeof hljs !== 'undefined') {
+        messageDiv.querySelectorAll('pre code:not(.hljs)').forEach((block) => {
+          hljs.highlightElement(block);
+        });
+      }
+    } catch (e) {
+      console.error('Markdown 解析失败:', e);
+      messageDiv.textContent = content;
+    }
+  } else {
+    messageDiv.textContent = content;
+  }
   
   // 滚动到底部
   chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// 设置 Markdown 渲染
+function setupMarked() {
+  console.log('设置 Markdown 渲染...');
+  console.log('marked 可用:', typeof marked !== 'undefined');
+  console.log('hljs 可用:', typeof hljs !== 'undefined');
+  
+  if (typeof marked !== 'undefined') {
+    // 配置 marked
+    marked.setOptions({
+      highlight: function(code, lang) {
+        if (typeof hljs !== 'undefined') {
+          if (lang && hljs.getLanguage(lang)) {
+            try {
+              return hljs.highlight(code, { language: lang }).value;
+            } catch (e) {
+              console.error('代码高亮失败:', e);
+            }
+          } else {
+            // 自动检测语言
+            try {
+              return hljs.highlightAuto(code).value;
+            } catch (e) {
+              console.error('自动代码高亮失败:', e);
+            }
+          }
+        }
+        return code;
+      },
+      breaks: true,
+      gfm: true
+    });
+    console.log('✅ Markdown 配置完成');
+  } else {
+    console.warn('⚠️ marked.js 未加载，Markdown 渲染不可用');
+  }
 }
 
 // 加载设置
@@ -427,6 +483,11 @@ refreshPageBtn.addEventListener('click', async () => {
 
 // 设置事件监听器
 function setupEventListeners() {
+  // 设置切换按钮
+  settingsToggleBtn.addEventListener('click', () => {
+    settingsSection.classList.toggle('hidden');
+  });
+
   sendButton.addEventListener('click', sendMessage);
   
   userInput.addEventListener('keydown', (e) => {

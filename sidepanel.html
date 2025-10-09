@@ -4,10 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OpenAI 网页助手 - 侧边栏</title>
-  <link rel="stylesheet" href="sidepanel.css">
-  <!-- Markdown 渲染支持 - 本地文件 -->
+  <title>AI网页助手 - 侧边栏</title>
+  <!-- Markdown 渲染支持 - 本地文件（先加载，避免覆盖主样式）-->
   <link rel="stylesheet" href="lib/github.min.css">
+  <!-- 主样式表（后加载，优先级更高）-->
+  <link rel="stylesheet" href="sidepanel.css">
   <script src="lib/marked.min.js"></script>
   <script src="lib/highlight.min.js"></script>
   <script src="markdown-renderer.js"></script>
@@ -41,22 +42,20 @@
       </div>
 
       <div class="setting-item">
-        <label for="modelSelect">选择模型:</label>
-        <div class="input-group">
-          <select id="modelSelect" size="1">
-            <option value="gpt-4">GPT-4</option>
-            <option value="gpt-4o">GPT-4o</option>
-            <option value="gpt-4o-mini">GPT-4o Mini</option>
-            <option value="gpt-4-turbo-preview">GPT-4 Turbo</option>
-            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-            <option value="claude-3-opus-20240229">Claude 3 Opus</option>
-            <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
-            <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
-            <option value="gemini-pro">Gemini Pro</option>
-            <option value="llama-2-70b-chat">Llama 2 70B</option>
-            <option value="mixtral-8x7b-instruct">Mixtral 8x7B</option>
+        <label for="modelInput">选择模型:</label>
+        <div class="model-selector-wrapper">
+          <div class="input-group">
+            <input type="text" id="modelInput" placeholder="输入搜索模型..." autocomplete="off">
+            <button id="refreshModels" class="btn-small" title="刷新模型列表">🔄</button>
+          </div>
+          <select id="modelList" size="6" class="model-list">
+            <option value="gpt-4">gpt-4</option>
+            <option value="gpt-4o">gpt-4o</option>
+            <option value="gpt-4o-mini">gpt-4o-mini</option>
+            <option value="gpt-4-turbo-preview">gpt-4-turbo-preview</option>
+            <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+            <option value="claude-3-opus-20240229">claude-3-opus-20240229</option>
           </select>
-          <button id="refreshModels" class="btn-small" title="刷新模型列表">🔄</button>
         </div>
       </div>
 

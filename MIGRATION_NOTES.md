@@ -23,7 +23,7 @@
 - ✅ 将消息 action 从 `callCopilotAPI` 改为 `callOpenAIAPI`
 
 #### `popup.html`
-- ✅ 更新页面标题为 "OpenAI 网页助手"
+- ✅ 更新页面标题为 "AI网页助手"
 - ✅ 更新标题为 "AI 助手"
 - ✅ 更新 API Key 输入框提示文本
 - ✅ 添加 API Endpoint 配置输入框和保存按钮
@@ -33,7 +33,7 @@
 - ✅ 更新控制台日志消息
 
 #### `manifest.json`
-- ✅ 更新扩展名称为 "OpenAI 网页助手"
+- ✅ 更新扩展名称为 "AI网页助手"
 - ✅ 更新描述为 "使用 OpenAI 兼容 API 分析和问答当前网页内容"
 - ✅ 更新 `host_permissions` 为 OpenAI API 域名
 

@@ -123,6 +123,7 @@ select {
   font-size: 14px;
   background: white;
   cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 select:focus {
@@ -131,6 +132,76 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+/* 模型选择器容器 */
+.model-selector-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 模型列表框样式 */
+.model-list {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.model-list:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+  
+  .model-list option {
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin: 2px 0;
+  }
+  
+  .model-list option:hover {
+    background: #f0f4ff;
+  }
+  
+  .model-list option:checked {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 500;
+}
+
+/* 模型搜索输入框高亮 */
+#modelInput:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* 空结果提示 */
+.model-list option[disabled] {
+  color: #999;
+  font-style: italic;
+  background: #fafafa;
+  cursor: not-allowed;
+}
+
+/* 搜索提示选项 */
+select option[value="__search__"] {
+  background: #f8f9fa;
+  font-weight: 500;
+  padding: 10px 12px;
+}
+
+select option:disabled {
+  color: #999;
+  font-style: italic;
+}
 /* 模型搜索框 */
 .model-search-wrapper {
   margin-bottom: 8px;
@@ -260,20 +331,28 @@ select:focus {
 }
 
 .user-message {
-  align-self: flex-end;
-  background: #667eea;
-  color: white;
+  align-self: flex-end !important;
+    background: #667eea !important;
+    color: white !important;
   border-bottom-right-radius: 4px;
 }
 
 .assistant-message {
-  align-self: flex-start;
-  background: #f0f0f0;
-  color: #333;
+  align-self: flex-start !important;
+    background: #f0f0f0 !important;
+    color: #333 !important;
   border-bottom-left-radius: 4px;
 }
 
-/* Markdown 样式 */
+/* Markdown 样式 - 确保所有文本元素都使用正确的颜色 */
+/* 重置所有颜色为深色，防止继承用户消息的白色 */
+.assistant-message,
+.assistant-message p,
+.assistant-message div,
+.assistant-message span,
+.assistant-message li {
+  color: #333 !important;
+}
 .assistant-message h1,
 .assistant-message h2,
 .assistant-message h3,
@@ -283,6 +362,7 @@ select:focus {
   margin: 16px 0 8px 0;
   font-weight: 600;
   line-height: 1.3;
+  color: #333 !important;
 }
 
 .assistant-message h1 { font-size: 1.5em; border-bottom: 2px solid #ddd; padding-bottom: 8px; }
@@ -290,11 +370,15 @@ select:focus {
 .assistant-message h3 { font-size: 1.15em; }
 .assistant-message h4 { font-size: 1.05em; }
 .assistant-message h5 { font-size: 1em; }
-.assistant-message h6 { font-size: 0.95em; color: #666; }
+.assistant-message h6 {
+  font-size: 0.95em;
+  color: #666 !important;
+}
 
 .assistant-message p {
   margin: 8px 0;
   line-height: 1.6;
+  color: #333 !important;
 }
 
 .assistant-message ul,
@@ -306,6 +390,7 @@ select:focus {
 .assistant-message li {
   margin: 4px 0;
   line-height: 1.5;
+  color: #333 !important;
 }
 
 .assistant-message code {
@@ -314,12 +399,12 @@ select:focus {
   border-radius: 4px;
   font-family: 'Courier New', Courier, monospace;
   font-size: 0.9em;
-  color: #d63384;
+  color: #d63384 !important;
 }
 
 .assistant-message pre {
   background: #2d2d2d;
-  color: #f8f8f2;
+  color: #f8f8f2 !important;
   padding: 12px;
   border-radius: 6px;
   overflow-x: auto;
@@ -330,25 +415,25 @@ select:focus {
 .assistant-message pre code {
   background: transparent;
   padding: 0;
-  color: inherit;
+  color: #f8f8f2 !important;
   border-radius: 0;
   font-size: 0.85em;
   line-height: 1.5;
 }
 
 .assistant-message blockquote {
-  border-left: 4px solid #667eea;
+  border-left: 3px solid #ddd;
   padding-left: 16px;
   margin: 12px 0;
-  color: #555;
-  font-style: italic;
-  background: #f9f9f9;
-  padding: 12px 16px;
-  border-radius: 4px;
+  color: #555 !important;
+  font-style: normal;
+    background: transparent;
+    padding: 8px 16px;
+    border-radius: 0;
 }
 
 .assistant-message a {
-  color: #667eea;
+  color: #667eea !important;
   text-decoration: none;
   border-bottom: 1px solid transparent;
   transition: border-color 0.2s;
@@ -363,6 +448,7 @@ select:focus {
   width: 100%;
   margin: 12px 0;
   font-size: 0.9em;
+  color: #333 !important;
 }
 
 .assistant-message table th,
@@ -370,11 +456,13 @@ select:focus {
   border: 1px solid #ddd;
   padding: 8px 12px;
   text-align: left;
+  color: #333 !important;
 }
 
 .assistant-message table th {
   background: #f5f5f5;
   font-weight: 600;
+  color: #333 !important;
 }
 
 .assistant-message table tr:nth-child(even) {
@@ -396,12 +484,12 @@ select:focus {
 
 .assistant-message strong {
   font-weight: 600;
-  color: #222;
+  color: #222 !important;
 }
 
 .assistant-message em {
   font-style: italic;
-  color: #444;
+  color: #444 !important;
 }
 
 /* 代码高亮调整 */

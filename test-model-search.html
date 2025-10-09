@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>模型搜索功能测试</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #667eea;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+    }
+
+    h2 {
+      color: #555;
+      margin-top: 30px;
+    }
+
+    .test-section {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .test-item {
+      background: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-left: 4px solid #667eea;
+      border-radius: 4px;
+    }
+
+    .test-item h3 {
+      margin-top: 0;
+      color: #667eea;
+      font-size: 16px;
+    }
+
+    .steps {
+      list-style: none;
+      padding: 0;
+    }
+
+    .steps li {
+      padding: 8px 0;
+      padding-left: 25px;
+      position: relative;
+    }
+
+    .steps li:before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: #667eea;
+      font-weight: bold;
+    }
+
+    .expected {
+      background: #e8f5e9;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+      border-left: 3px solid #4caf50;
+    }
+
+    .expected strong {
+      color: #2e7d32;
+    }
+
+    .keyboard {
+      display: inline-block;
+      background: #333;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .feature-list {
+      background: #fff3cd;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #ffc107;
+    }
+
+    .feature-list ul {
+      margin: 10px 0;
+    }
+
+    .feature-list li {
+      padding: 5px 0;
+    }
+
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+      color: #d73a49;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🔍 模型搜索功能测试指南</h1>
+
+    <div class="feature-list">
+      <h2>✨ 核心功能</h2>
+      <ul>
+        <li>✅ 键盘输入实时搜索模型</li>
+        <li>✅ 搜索文字显示在下拉框顶部</li>
+        <li>✅ 列表实时筛选显示匹配模型</li>
+        <li>✅ 支持前缀匹配 + 包含匹配</li>
+        <li>✅ 无需额外搜索框</li>
+      </ul>
+    </div>
+
+    <h2>🧪 测试用例</h2>
+
+    <div class="test-section">
+      <div class="test-item">
+        <h3>测试 1：基本搜索 - GPT 系列</h3>
+        <ul class="steps">
+          <li>打开侧边栏，点击"选择模型"下拉框</li>
+          <li>输入 <span class="keyboard">g</span><span class="keyboard">p</span><span class="keyboard">t</span></li>
+          <li>观察下拉框变化</li>
+        </ul>
+        <div class="expected">
+          <strong>预期结果：</strong>
+          <ul>
+            <li>下拉框顶部显示：<code>🔍 搜索: gpt</code></li>
+            <li>状态栏显示：<code>🔍 搜索: gpt</code></li>
+            <li>列表显示所有 GPT 模型（gpt-4, gpt-4o, gpt-4o-mini, gpt-4-turbo-preview, gpt-3.5-turbo）</li>
+            <li>下拉框边框变为蓝色</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="test-item">
+        <h3>测试 2：前缀匹配 - Claude</h3>
+        <ul class="steps">
+          <li>点击"选择模型"下拉框</li>
+          <li>输入 <span class="keyboard">c</span><span class="keyboard">l</span><span class="keyboard">a</span><span
+              class="keyboard">u</span><span class="keyboard">d</span><span class="keyboard">e</span></li>
+        </ul>
+        <div class="expected">
+          <strong>预期结果：</strong>
+          <ul>
+            <li>下拉框顶部显示：<code>🔍 搜索: claude</code></li>
+            <li>列表显示所有 Claude 模型</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="test-item">
+        <h3>测试 3：包含匹配 - turbo</h3>
+        <ul class="steps">
+          <li>点击"选择模型"下拉框</li>
+          <li>输入 <span class="keyboard">t</span><span class="keyboard">u</span><span class="keyboard">r</span><span
+              class="keyboard">b</span><span class="keyboard">o</span></li>
+        </ul>
+        <div class="expected">
+          <strong>预期结果：</strong>
+          <ul>
+            <li>下拉框顶部显示：<code>🔍 搜索: turbo</code></li>
+            <li>列表显示包含 "turbo" 的模型（gpt-4-turbo-preview, gpt-3.5-turbo）</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="test-item">
+        <h3>测试 4：退格删除</h3>
+        <ul class="steps">
+          <li>输入 <span class="keyboard">g</span><span class="keyboard">p</span><span class="keyboard">t</span><span
+              class="keyboard">4</span></li>
+          <li>按 <span class="keyboard">Backspace</span> 键</li>
+        </ul>
+        <div class="expected">
+          <strong>预期结果：</strong>
+          <ul>
+            <li>搜索文字变为 <code>gpt</code></li>
+            <li>列表重新显示所有 GPT 模型</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="test-item">
+        <h3>测试 5：Enter 确认选择</h3>
+        <ul class="steps">
+          <li>输入 <span class="keyboard">g</span><span class="keyboard">p</span><span class="keyboard">t</span></li>
+          <li>使用 <span class="keyboard">↓</span> 选择一个模型</li>
+          <li>按 <span class="keyboard">Enter</span></li>
+        </ul>
+        <div class="expected">
+          <strong>预期结果：</strong>
+          <ul>
+            <li>选择的模型被保存</li>
+            <li>搜索被清除，列表恢复显示所有模型</li>
+            <li>状态栏显示：<code>✅ 已切换到 xxx</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="test-item">
+        <h3>测试 6：Escape 清除搜索</h3>
+        <ul class="steps">
+          <li>输入任意搜索文字</li>
+          <li>按 <span class="keyboard">Escape</span></li>
+        </ul>
+        <div class="expected">
+          <strong>预期结果：</strong>
+          <ul>
+            <li>搜索立即被清除</li>
+            <li>列表恢复显示所有模型</li>
+            <li>状态栏显示：<code>🔍 搜索已清除</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="test-item">
+        <h3>测试 7：自动清除（3秒超时）</h3>
+        <ul class="steps">
+          <li>输入任意搜索文字</li>
+          <li>等待 3 秒，不进行任何操作</li>
+        </ul>
+        <div class="expected">
+          <strong>预期结果：</strong>
+          <ul>
+            <li>3秒后搜索自动清除</li>
+            <li>状态栏显示：<code>🔍 搜索已自动清除</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="test-item">
+        <h3>测试 8：失去焦点清除</h3>
+        <ul class="steps">
+          <li>输入任意搜索文字</li>
+          <li>点击页面其他位置（使下拉框失去焦点）</li>
+        </ul>
+        <div class="expected">
+          <strong>预期结果：</strong>
+          <ul>
+            <li>搜索被清除</li>
+            <li>列表恢复正常</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="test-item">
+        <h3>测试 9：无匹配结果</h3>
+        <ul class="steps">
+          <li>输入不存在的模型名 <span class="keyboard">x</span><span class="keyboard">y</span><span class="keyboard">z</span>
+          </li>
+        </ul>
+        <div class="expected">
+          <strong>预期结果：</strong>
+          <ul>
+            <li>下拉框顶部显示：<code>🔍 搜索: xyz</code></li>
+            <li>列表显示：<code>❌ 未找到匹配的模型</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="test-item">
+        <h3>测试 10：点击选择后清除</h3>
+        <ul class="steps">
+          <li>输入搜索文字</li>
+          <li>用鼠标点击选择一个模型</li>
+        </ul>
+        <div class="expected">
+          <strong>预期结果：</strong>
+          <ul>
+            <li>模型被选中</li>
+            <li>搜索自动清除</li>
+            <li>列表恢复显示所有模型</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <h2>⌨️ 键盘快捷键</h2>
+    <div class="test-section">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr style="background: #667eea; color: white;">
+          <th style="padding: 10px; text-align: left;">按键</th>
+          <th style="padding: 10px; text-align: left;">功能</th>
+        </tr>
+        <tr style="background: #f8f9fa;">
+          <td style="padding: 10px;"><span class="keyboard">字母/数字</span></td>
+          <td style="padding: 10px;">追加到搜索文字</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px;"><span class="keyboard">Backspace</span></td>
+          <td style="padding: 10px;">删除最后一个字符</td>
+        </tr>
+        <tr style="background: #f8f9fa;">
+          <td style="padding: 10px;"><span class="keyboard">Enter</span></td>
+          <td style="padding: 10px;">确认选择并清除搜索</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px;"><span class="keyboard">Escape</span></td>
+          <td style="padding: 10px;">立即清除搜索</td>
+        </tr>
+        <tr style="background: #f8f9fa;">
+          <td style="padding: 10px;"><span class="keyboard">↑</span> <span class="keyboard">↓</span></td>
+          <td style="padding: 10px;">在结果中移动</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px;"><span class="keyboard">Tab</span></td>
+          <td style="padding: 10px;">退出选择框</td>
+        </tr>
+      </table>
+    </div>
+
+    <h2>🎨 视觉效果验证</h2>
+    <div class="test-section">
+      <ul>
+        <li><strong>搜索态：</strong>下拉框边框变蓝色，背景有渐变效果</li>
+        <li><strong>搜索提示：</strong>顶部选项显示 🔍 图标，蓝色加粗字体</li>
+        <li><strong>无结果：</strong>显示 ❌ 图标，灰色斜体</li>
+        <li><strong>状态栏：</strong>实时显示搜索文字或操作提示</li>
+      </ul>
+    </div>
+
+    <h2>✅ 验收标准</h2>
+    <div class="test-section">
+      <ol>
+        <li>所有 10 个测试用例都通过</li>
+        <li>键盘交互流畅，无卡顿</li>
+        <li>搜索提示清晰可见</li>
+        <li>筛选结果准确（前缀优先，然后包含）</li>
+        <li>无控制台错误</li>
+        <li>视觉效果符合设计</li>
+      </ol>
+    </div>
+  </div>
+</body>
+
+</html>

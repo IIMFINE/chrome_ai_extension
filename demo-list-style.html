@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>列表样式模型选择 - 演示</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 500px;
+      width: 100%;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 25px;
+      font-size: 24px;
+      text-align: center;
+    }
+    .model-selector-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    label {
+      font-weight: 600;
+      color: #555;
+      font-size: 14px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .model-list {
+      width: 100%;
+      padding: 6px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 13px;
+      background: #fafafa;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .model-list:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      background: white;
+    }
+    .model-list option {
+      padding: 8px 10px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin: 3px 0;
+      transition: background 0.2s;
+    }
+    .model-list option:hover {
+      background: #f0f4ff;
+    }
+    .model-list option:checked {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-weight: 600;
+    }
+    .current-selection {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f0f4ff;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .current-selection strong {
+      color: #667eea;
+    }
+    .current-selection span {
+      color: #333;
+      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+      font-weight: 600;
+    }
+    .tips {
+      margin-top: 20px;
+      padding: 15px;
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #856404;
+    }
+    .tips ul {
+      margin: 8px 0 0 20px;
+    }
+    .tips li {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🎯 列表式模型选择器</h1>
+    
+    <div class="model-selector-wrapper">
+      <label for="searchInput">🔍 搜索模型</label>
+      <input type="text" id="searchInput" placeholder="输入关键词搜索..." autocomplete="off">
+      
+      <label for="modelList">📋 模型列表（点击选择）</label>
+      <select id="modelList" size="7" class="model-list"></select>
+    </div>
+
+    <div class="current-selection">
+      <strong>当前选择：</strong> <span id="currentModel">-</span>
+    </div>
+
+    <div class="tips">
+      <strong>💡 提示：</strong>
+      <ul>
+        <li>在搜索框输入关键词即可筛选</li>
+        <li>点击列表项选择模型</li>
+        <li>双击快速确认选择</li>
+        <li>按 Enter 选择列表第一项</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const modelList = document.getElementById('modelList');
+    const currentModel = document.getElementById('currentModel');
+
+    const allModels = [
+      'gpt-4', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo-preview', 'gpt-3.5-turbo',
+      'claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307',
+      'gemini-pro', 'gemini-1.5-pro', 'llama-2-70b-chat', 'mixtral-8x7b-instruct'
+    ];
+
+    let selectedModel = '';
+
+    searchInput.addEventListener('input', (e) => {
+      updateModelList(e.target.value.trim().toLowerCase());
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && modelList.options.length > 0) {
+        e.preventDefault();
+        modelList.selectedIndex = 0;
+        selectModel(modelList.value);
+      }
+    });
+
+    modelList.addEventListener('change', (e) => {
+      selectModel(e.target.value);
+    });
+
+    modelList.addEventListener('dblclick', () => {
+      selectModel(modelList.value);
+    });
+
+    function updateModelList(searchText) {
+      modelList.innerHTML = '';
+      
+      let filtered = allModels;
+      if (searchText) {
+        const prefix = allModels.filter(m => m.toLowerCase().startsWith(searchText));
+        const contains = allModels.filter(m => !m.toLowerCase().startsWith(searchText) && m.toLowerCase().includes(searchText));
+        filtered = [...prefix, ...contains];
+      }
+
+      if (filtered.length > 0) {
+        filtered.forEach(model => {
+          const option = document.createElement('option');
+          option.value = model;
+          option.textContent = model;
+          if (model === selectedModel) option.selected = true;
+          modelList.appendChild(option);
+        });
+      } else {
+        const option = document.createElement('option');
+        option.textContent = '❌ 未找到匹配的模型';
+        option.disabled = true;
+        modelList.appendChild(option);
+      }
+    }
+
+    function selectModel(model) {
+      if (model && allModels.includes(model)) {
+        selectedModel = model;
+        searchInput.value = model;
+        currentModel.textContent = model;
+        currentModel.style.color = '#28a745';
+      }
+    }
+
+    // 初始化
+    updateModelList('');
+    if (allModels.length > 0) {
+      selectModel(allModels[0]);
+    }
+  </script>
+</body>
+</html>

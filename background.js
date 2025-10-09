@@ -1,6 +1,6 @@
 // Background Service Worker
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('OpenAI 网页助手已安装');
+  console.log('AI网页助手已安装');
   
   // 设置默认配置
   chrome.storage.sync.get(['apiKey', 'selectedModel', 'apiEndpoint'], (result) => {
@@ -15,6 +15,11 @@ chrome.runtime.onInstalled.addListener(() => {
       });
     }
   });
+});
+
+// 点击扩展图标时打开侧边栏
+chrome.action.onClicked.addListener((tab) => {
+  chrome.sidePanel.open({ windowId: tab.windowId });
 });
 
 // 处理来自 popup 的消息
