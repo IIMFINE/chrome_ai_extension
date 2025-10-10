@@ -8,6 +8,7 @@ let sendMethod = 'enter'; // 'enter' or 'ctrl-enter'
 let systemPrompt = '使用 Markdown 格式，代码块的格式使用 plain txt，避免将整个回复用三个反引号包裹起来'; // 默认 system prompt
 let currentStreamingMessageId = null; // 当前正在流式接收的消息 ID
 let currentStreamingContent = ''; // 当前流式接收的内容
+let activeMessageEditor = null; // 当前激活的消息编辑器
 
 // DOM 元素
 const settingsToggleBtn = document.getElementById('settingsToggle');
@@ -97,7 +98,12 @@ function handleStreamComplete() {
   finalizeStreamingMessage(currentStreamingMessageId, currentStreamingContent);
   
   // 更新聊天历史
-  chatHistory.push({ role: 'assistant', content: currentStreamingContent });
+  const assistantHistoryIndex = chatHistory.push({ role: 'assistant', content: currentStreamingContent }) - 1;
+  const assistantMessageElement = document.getElementById(currentStreamingMessageId);
+  if (assistantMessageElement) {
+    assistantMessageElement.dataset.historyIndex = assistantHistoryIndex;
+    assistantMessageElement.dataset.originalContent = currentStreamingContent;
+  }
   
   // 重置流式状态
   currentStreamingMessageId = null;
@@ -554,6 +560,7 @@ refreshPageBtn.addEventListener('click', async () => {
   await loadPageContent();
   chatHistory = [];
   chatMessages.innerHTML = '<div class="system-message">👋 页面内容已刷新！你可以重新提问。</div>';
+  activeMessageEditor = null;
 });
 
 // 设置事件监听器
@@ -582,33 +589,60 @@ function setupEventListeners() {
   });
 }
 
-// 发送消息
+function validateBeforeSend() {
+  if (!apiKey) {
+    return '请先设置 API Key';
+  }
+  
+  if (!pageContent) {
+    return '页面内容尚未加载，请稍候或刷新';
+  }
+  
+  if (currentStreamingMessageId) {
+    return '正在接收上一次回复，请稍候再试';
+  }
+  
+  return null;
+}
+
+// 发送消息（来自输入框）
 async function sendMessage() {
   const message = userInput.value.trim();
   
   if (!message) return;
-  
-  if (!apiKey) {
-    addMessage('error', '请先设置 API Key');
+
+  const validationError = validateBeforeSend();
+  if (validationError) {
+    addMessage('error', validationError);
     return;
   }
   
-  if (!pageContent) {
-    addMessage('error', '页面内容尚未加载，请稍候或刷新');
+  userInput.value = '';
+  await sendPreparedMessage(message);
+}
+
+// 发送指定文本的消息（编辑或输入通用入口）
+async function sendPreparedMessage(message) {
+  const validationError = validateBeforeSend();
+  if (validationError) {
+    addMessage('error', validationError);
     return;
   }
-  
+
   // 显示用户消息
   const userMessageId = addMessage('user', message);
   console.log('用户消息已添加，ID:', userMessageId);
-  
-  userInput.value = '';
+  const userMessageElement = document.getElementById(userMessageId);
   
   // 禁用输入
   setInputEnabled(false);
   
   // 更新用户消息历史
-  chatHistory.push({ role: 'user', content: message });
+  const historyIndex = chatHistory.push({ role: 'user', content: message }) - 1;
+  
+  if (userMessageElement) {
+    registerUserMessage(userMessageElement, historyIndex, message);
+  }
   
   // 创建助手消息占位符，显示等待提示
   currentStreamingMessageId = addMessage('assistant', '等待回复...');
@@ -620,7 +654,7 @@ async function sendMessage() {
   
   try {
     // 构建消息历史
-    const messages = buildMessages(message);
+    const messages = buildMessages();
     
     // 调用流式 API
     await callStreamAPI(messages);
@@ -642,7 +676,7 @@ async function sendMessage() {
 }
 
 // 构建消息数组
-function buildMessages(userMessage) {
+function buildMessages() {
   const systemMessage = {
     role: 'system',
     content: `你是一个智能助手，正在帮助用户理解和分析当前网页的内容。
@@ -660,7 +694,7 @@ ${pageContent.mainText}
 ${systemPrompt ? '\n用户要求：' + systemPrompt : ''}`
   };
   
-  const messages = [systemMessage, ...chatHistory, { role: 'user', content: userMessage }];
+  const messages = [systemMessage, ...chatHistory];
   
   return messages;
 }
@@ -733,9 +767,12 @@ function addMessage(type, content) {
     case 'user':
       messageDiv.className = 'message user-message';
       messageDiv.textContent = content;
+      messageDiv.dataset.messageType = 'user';
+      messageDiv.dataset.originalContent = content;
       break;
     case 'assistant':
       messageDiv.className = 'message assistant-message markdown-content';
+      messageDiv.dataset.messageType = 'assistant';
       // 使用 marked.js 渲染 Markdown
       if (typeof marked !== 'undefined') {
         try {
@@ -791,6 +828,169 @@ function addMessage(type, content) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
   
   return messageId;
+}
+
+function registerUserMessage(messageElement, historyIndex, content) {
+  if (!messageElement) return;
+  messageElement.dataset.historyIndex = historyIndex;
+  messageElement.dataset.originalContent = content;
+  messageElement.removeEventListener('click', handleUserMessageClick);
+  messageElement.addEventListener('click', handleUserMessageClick);
+}
+
+function handleUserMessageClick(event) {
+  const messageElement = event.currentTarget;
+  if (!messageElement) return;
+  startEditingUserMessage(messageElement);
+}
+
+function startEditingUserMessage(messageElement) {
+  if (!messageElement || messageElement.dataset.messageType !== 'user') return;
+  if (currentStreamingMessageId) {
+    updateStatus('⚠️ 正在接收回复，请稍后再编辑');
+    return;
+  }
+  
+  if (activeMessageEditor && activeMessageEditor.messageDiv === messageElement) {
+    return;
+  }
+  
+  if (activeMessageEditor) {
+    clearActiveMessageEditor();
+  }
+  
+  const originalText = messageElement.dataset.originalContent || messageElement.textContent || '';
+  const textarea = document.createElement('textarea');
+  textarea.className = 'message-editor';
+  textarea.value = originalText;
+  messageElement.innerHTML = '';
+  messageElement.classList.add('editing');
+  messageElement.appendChild(textarea);
+  
+  const autoResizeHandler = () => autoResizeEditor(textarea);
+  autoResizeHandler();
+  
+  const keydownHandler = (e) => {
+    const isSendShortcut = sendMethod === 'enter'
+      ? (e.key === 'Enter' && !e.shiftKey)
+      : (e.key === 'Enter' && (e.ctrlKey || e.metaKey));
+    
+    if (isSendShortcut) {
+      e.preventDefault();
+      submitEditedMessage(messageElement, textarea.value).catch((error) => {
+        console.error('重新发送编辑内容失败:', error);
+      });
+      return;
+    }
+    
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      clearActiveMessageEditor();
+    }
+  };
+  
+  const blurHandler = () => {
+    clearActiveMessageEditor();
+  };
+  
+  textarea.addEventListener('keydown', keydownHandler);
+  textarea.addEventListener('blur', blurHandler);
+  textarea.addEventListener('input', autoResizeHandler);
+  textarea.focus();
+  textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+  
+  activeMessageEditor = {
+    messageDiv: messageElement,
+    textarea,
+    originalText,
+    keydownHandler,
+    blurHandler,
+    inputHandler: autoResizeHandler
+  };
+  
+  updateStatus('✏️ 编辑模式：使用快捷键发送，Esc 取消');
+}
+
+function clearActiveMessageEditor(options = {}) {
+  if (!activeMessageEditor) return;
+  const { messageDiv, textarea, originalText, keydownHandler, blurHandler, inputHandler } = activeMessageEditor;
+  
+  textarea.removeEventListener('keydown', keydownHandler);
+  textarea.removeEventListener('blur', blurHandler);
+  textarea.removeEventListener('input', inputHandler);
+  
+  messageDiv.classList.remove('editing');
+  if (options.restoreContent !== false) {
+    messageDiv.textContent = originalText;
+    messageDiv.dataset.originalContent = originalText;
+  }
+  
+  activeMessageEditor = null;
+  if (!options.keepStatus) {
+    updateStatus('');
+  }
+}
+
+async function submitEditedMessage(messageElement, newContent) {
+  if (!messageElement) return;
+  const trimmedContent = (newContent || '').trim();
+  const originalText = messageElement.dataset.originalContent || '';
+
+  if (!trimmedContent) {
+    updateStatus('⚠️ 消息内容不能为空');
+    clearActiveMessageEditor({ keepStatus: true });
+    return;
+  }
+
+  if (trimmedContent === originalText.trim()) {
+    clearActiveMessageEditor();
+    return;
+  }
+
+  const validationError = validateBeforeSend();
+  if (validationError) {
+    clearActiveMessageEditor();
+    addMessage('error', validationError);
+    return;
+  }
+  
+  const historyIndex = Number(messageElement.dataset.historyIndex);
+  if (Number.isNaN(historyIndex)) {
+    clearActiveMessageEditor();
+    console.warn('无法确定消息的历史索引，取消编辑发送');
+    return;
+  }
+
+  clearActiveMessageEditor({ restoreContent: false });
+  truncateChatHistoryFrom(historyIndex);
+  removeMessagesFrom(messageElement);
+  
+  await sendPreparedMessage(trimmedContent);
+}
+
+function truncateChatHistoryFrom(index) {
+  if (index < 0) return;
+  chatHistory = chatHistory.slice(0, index);
+}
+
+function removeMessagesFrom(messageElement) {
+  if (!messageElement) return;
+  let node = messageElement;
+  while (node) {
+    const next = node.nextElementSibling;
+    if (node.id === currentStreamingMessageId) {
+      currentStreamingMessageId = null;
+      currentStreamingContent = '';
+    }
+    node.remove();
+    node = next;
+  }
+}
+
+function autoResizeEditor(textarea) {
+  if (!textarea) return;
+  textarea.style.height = 'auto';
+  textarea.style.height = Math.max(textarea.scrollHeight, 48) + 'px';
 }
 
 // 移除消息
