@@ -563,6 +563,18 @@ refreshPageBtn.addEventListener('click', async () => {
   activeMessageEditor = null;
 });
 
+// 自动调整 textarea 高度
+function autoResizeTextarea(textarea) {
+  // 重置高度以获取正确的 scrollHeight
+  textarea.style.height = 'auto';
+  
+  // 计算新高度
+  const newHeight = Math.min(textarea.scrollHeight, 300); // 最大高度 300px
+  
+  // 设置新高度
+  textarea.style.height = newHeight + 'px';
+}
+
 // 设置事件监听器
 function setupEventListeners() {
   // 设置按钮切换
@@ -571,6 +583,11 @@ function setupEventListeners() {
   });
 
   sendButton.addEventListener('click', sendMessage);
+  
+  // 自动调整输入框高度
+  userInput.addEventListener('input', () => {
+    autoResizeTextarea(userInput);
+  });
   
   userInput.addEventListener('keydown', (e) => {
     if (sendMethod === 'enter') {
@@ -618,6 +635,8 @@ async function sendMessage() {
   }
   
   userInput.value = '';
+  // 重置输入框高度
+  userInput.style.height = 'auto';
   await sendPreparedMessage(message);
 }
 
